@@ -1,4 +1,4 @@
-module ipLimiter
+module github.com/crystalx0375/ip-limiter-go
 
 go 1.26.5
 
