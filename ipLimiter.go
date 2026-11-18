@@ -2,7 +2,6 @@ package ipLimiter
 
 import (
 	"context"
-	"fmt"
 	"sync"
 	"time"
 
@@ -82,7 +81,6 @@ func (x *IpLimiter) ipTicker() {
 			for ip, cl := range x.ips {
 				if cl.expiresAt.Before(now) && cl.blockedUntil.Before(now) {
 					delete(x.ips, ip)
-					fmt.Println("ip deleted")
 				}
 			}
 			x.m.Unlock()
