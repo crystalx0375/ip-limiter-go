@@ -1,4 +1,4 @@
-package ipLimiter
+package iplimiter
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	"golang.org/x/time/rate"
 )
 
-type Client struct {
+type client struct {
 	limiter      *rate.Limiter
 	expiresAt    time.Time
 	blockedUntil time.Time
@@ -16,7 +16,7 @@ type Client struct {
 
 type IpLimiter struct {
 	ctx    context.Context
-	ips    map[string]*Client
+	ips    map[string]*client
 	ttl    time.Duration
 	r      rate.Limit
 	b      int
@@ -25,13 +25,23 @@ type IpLimiter struct {
 	m sync.Mutex
 }
 
+// Create new limiter by ip
+// r, b - integer for "golang.org/x/time/rate"
+// ttl - time to loop for ticker to clear
+// punish - duration of punish, when iplimiter.Allow() return false
 func NewLimiter(ctx context.Context, r rate.Limit, b int, ttl, punish time.Duration) *IpLimiter {
 	if ttl <= 0 {
 		panic("ttl must be above 0")
 	}
+	if punish <= 0 {
+		panic("punish must be above 0")
+	}
+	if punish <= 0 {
+		panic("burst must be above 0")
+	}
 	x := &IpLimiter{
 		ctx:    ctx,
-		ips:    make(map[string]*Client, 50),
+		ips:    make(map[string]*client, 50),
 		r:      r,
 		b:      b,
 		ttl:    ttl,
@@ -41,6 +51,8 @@ func NewLimiter(ctx context.Context, r rate.Limit, b int, ttl, punish time.Durat
 	return x
 }
 
+// Allow ip, true if allowed, false if banned
+// Works like "golang.org/x/time/rate", but for ip
 func (x *IpLimiter) Allow(ip string) bool {
 	now := time.Now()
 
@@ -49,7 +61,7 @@ func (x *IpLimiter) Allow(ip string) bool {
 
 	cl := x.ips[ip]
 	if cl == nil {
-		cl = &Client{
+		cl = &client{
 			limiter: rate.NewLimiter(x.r, x.b),
 		}
 	}
